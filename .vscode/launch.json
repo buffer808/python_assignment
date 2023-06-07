@@ -12,7 +12,7 @@
             "webRoot": "${workspaceFolder}/financial",
         },
         {
-            "name": "Pyhton: Remote Attach",
+            "name": "Python: Remote Attach",
             "type": "python",
             "request": "attach",
             "connect": {
@@ -21,11 +21,12 @@
             },
             "pathMappings": [
                 {
-                    "localRoot": "${workspaceFolder}/financial",
-                    "remoteRoot": "/financial"
+                    "localRoot": "${workspaceFolder}",
+                    "remoteRoot": "/app"  // Update this with your container's source code path
                 }
             ]
-        },
+        }
+        
         
     ]
 }

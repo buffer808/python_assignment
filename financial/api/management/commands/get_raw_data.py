@@ -5,6 +5,7 @@ import os, datetime, json
 
 class Command(BaseCommand):
     help = "Retrieve the financial data of Two given stocks (IBM, Apple Inc.)for the most recently two weeks. Using a free API provider named AlphaVantage"
+    output_data = []
     
     def handle(self, *args, **options):
         
@@ -25,43 +26,31 @@ class Command(BaseCommand):
         ibm_data, ibm_meta_data = ts.get_daily_adjusted(symbol='IBM', outputsize='full')
 
         # Retrieve the stock data for Apple Inc.
-        apple_data, apple_meta_data = ts.get_daily_adjusted(symbol='AAPL', outputsize='full')
-
-        # Print the recent two weeks of data for IBM
-        self.stdout.write("IBM Stock Data:")
-        output_data = []
+        apple_data, apple_meta_data = ts.get_daily_adjusted(symbol='AAPL', outputsize='full')        
         
+        # Print the recent two weeks of data for IBM
         for date, data in ibm_data.items():
             parsed_date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
             if parsed_date >= two_weeks_ago:
                 self.storeData('IBM', parsed_date, data)
-                output_data.append({
-                    'symbol': 'IBM',
-                    'date': str(parsed_date),
-                    'open_price': float(data['1. open']), 
-                    'close_price': float(data['4. close']), 
-                    'volume': int(data['6. volume'])
-                })
+                self._updateOutputData(
+                    'IBM', str(parsed_date), data['1. open'],  data['4. close'],  data['6. volume']
+                )
                 continue
                         
                 
 
         # Print the recent two weeks of data for Apple Inc.
-        print("\nApple Inc. Stock Data:")
         for date, data in apple_data.items():
             parsed_date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
             if parsed_date >= two_weeks_ago:
                 self.storeData('AAPL', parsed_date, data)
-                output_data.append({
-                    'symbol': 'IBM',
-                    'date': str(parsed_date),
-                    'open_price': float(data['1. open']), 
-                    'close_price': float(data['4. close']), 
-                    'volume': int(data['6. volume'])
-                })
+                self._updateOutputData(
+                    'AAPL', str(parsed_date), data['1. open'],  data['4. close'],  data['6. volume']
+                )
                 continue
         
-        print(json.dumps(output_data))
+        print(json.dumps(self.output_data))
                 
     # Store the data to financial_data table
     def storeData(self, symbol, date, data):
@@ -76,3 +65,12 @@ class Command(BaseCommand):
         except Exception as e:
             if('duplicate key value violates unique constraint' not in str(e)):
                 raise Exception(str(e))
+            
+    def _updateOutputData(self, symbol, date, open, close, volume):
+        self.output_data.append({
+            'symbol': symbol,
+            'date': date,
+            'open_price': float(open), 
+            'close_price': float(close), 
+            'volume': int(volume)
+        })
