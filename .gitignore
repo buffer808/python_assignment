@@ -1,2 +1,8 @@
-.env
+.DS_Store
+Thumbs.db
 db/
+.env
+*.log
+*.pot
+*.pyc
+__pycache__/

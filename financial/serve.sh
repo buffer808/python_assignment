@@ -7,6 +7,6 @@ cd /app/financial
 if [ "$RUN_DEBUGGER" = "True" ]; then
     python -m debugpy --listen 0.0.0.0:9009 --wait-for-client manage.py runserver 0.0.0.0:5000
 else
-    # python manage.py runserver 0.0.0.0:8000
-    gunicorn financial.wsgi:application --bind=0.0.0.0:5000
+    python manage.py runserver 0.0.0.0:5000
+    # gunicorn financial.wsgi:application --bind=0.0.0.0:5000 # uncomment for production deployment
 fi;

@@ -5,6 +5,7 @@ from django.core.paginator import Paginator
 from .serializers import FinancialDataSerializer
 from .models import FinancialData
 from django.db.models import Q
+import numpy as np
 import datetime
 
 class FinancialDataView:
@@ -28,6 +29,7 @@ class FinancialDataView:
             symbol = request.GET.get('symbol') or None
             limit = request.GET.get('limit') or '5'
             page = request.GET.get('page') or '1'
+            
             data_obj = FinancialData.objects
             
             if symbol is not None:
@@ -63,7 +65,62 @@ class FinancialDataView:
         except Exception as e:
             error = str(e)
             output['info']['error'] = error
-            
         
+        return Response(output)
+    
+    @api_view(['GET'])
+    def getStatistics(request):
+        def _get_avg(key, data):
+            try:
+                row_count = data.count()
+                row_data = [getattr(i, key) for i in data]
+                row_arr = np.array(row_data).reshape(row_count, 1)
+                return np.mean(row_arr)
+            except Exception as e:
+                pass
+            
+        output = {
+            'data':[],
+            'info':{'error':''}
+        }
+        
+        try:
+            start_date = request.GET.get('start_date') or None
+            end_date = request.GET.get('end_date') or None
+            symbol = request.GET.get('symbol') or None
+            
+            if not start_date:
+                raise Exception('`start_date` parameter is required.')
+            
+            if not end_date:
+                raise Exception('`end_date` parameter is required.')
+            
+            if not symbol:
+                raise Exception('`symbol` parameter is required.')
+            
+            start_date = datetime.datetime.strptime(start_date, "%Y-%m-%d").date()
+            end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d").date()
+            
+            financial_data = FinancialData.objects.filter(symbol=symbol).filter(date__range=(start_date,end_date))
+            
+            if not financial_data.count():
+                raise Exception('No records were found.')
+            
+            avg_open_prices = _get_avg('open_price', financial_data)
+            avg_close_prices = _get_avg('close_price', financial_data)
+            avg_volumes = _get_avg('volume', financial_data)
+            
+            output.update({'data': {
+                "start_date" : start_date,
+                "end_date" : end_date,
+                "symbol" : symbol,
+                "average_daily_open_price" : format(avg_open_prices, '.2f'),
+                "average_daily_close_price" : format(avg_close_prices, '.2f'),
+                "average_daily_volume" : format(avg_volumes, '.2f'),
+            }})
+            
+        except Exception as e:
+            error = str(e)
+            output['info']['error'] = error
         
         return Response(output)

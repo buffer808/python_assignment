@@ -5,4 +5,5 @@ psycopg2-binary>=2.9.5,<2.10
 djangorestframework>=3.14.0,<3.15
 django-filter>=23.1,<23.2
 markdown>=3.4.3,<3.5
-alpha_vantage >= 2.3.1, < 2.4
+alpha_vantage>=2.3.1,<2.4
+numpy >=1.24.3,>1.3

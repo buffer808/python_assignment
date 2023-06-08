@@ -7,6 +7,8 @@ class Command(BaseCommand):
     help = "Retrieve the financial data of Two given stocks (IBM, Apple Inc.)for the most recently two weeks. Using a free API provider named AlphaVantage"
     output_data = []
     
+    stocks = ['IBM','AAPL']
+    
     def handle(self, *args, **options):
         
         # Set your AlphaVantage API key here
@@ -15,45 +17,29 @@ class Command(BaseCommand):
         # Get the current date
         current_date = datetime.date.today()
 
-        # Calculate the date 2 weeks ago
+        # Get the date 2 weeks ago
         weeks_delta = datetime.timedelta(weeks=2)
         two_weeks_ago = current_date - weeks_delta
 
         # Create a TimeSeries object with your API key
         ts = TimeSeries(key=API_KEY)
-
-        # Retrieve the stock data for IBM
-        ibm_data, ibm_meta_data = ts.get_daily_adjusted(symbol='IBM', outputsize='full')
-
-        # Retrieve the stock data for Apple Inc.
-        apple_data, apple_meta_data = ts.get_daily_adjusted(symbol='AAPL', outputsize='full')        
         
-        # Print the recent two weeks of data for IBM
-        for date, data in ibm_data.items():
-            parsed_date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
-            if parsed_date >= two_weeks_ago:
-                self.storeData('IBM', parsed_date, data)
-                self._updateOutputData(
-                    'IBM', str(parsed_date), data['1. open'],  data['4. close'],  data['6. volume']
-                )
-                continue
-                        
-                
-
-        # Print the recent two weeks of data for Apple Inc.
-        for date, data in apple_data.items():
-            parsed_date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
-            if parsed_date >= two_weeks_ago:
-                self.storeData('AAPL', parsed_date, data)
-                self._updateOutputData(
-                    'AAPL', str(parsed_date), data['1. open'],  data['4. close'],  data['6. volume']
-                )
-                continue
+        for stock in self.stocks:
+            stock_data, stock_meta_data = ts.get_daily_adjusted(symbol=stock, outputsize='compact')
+            
+            for date, data in stock_data.items():
+                parsed_date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
+                if parsed_date >= two_weeks_ago:
+                    self._storeData(stock, parsed_date, data)
+                    self._updateOutputData(
+                        stock, str(parsed_date), data['1. open'],  data['4. close'],  data['6. volume']
+                    )
+                    continue
         
         print(json.dumps(self.output_data))
                 
     # Store the data to financial_data table
-    def storeData(self, symbol, date, data):
+    def _storeData(self, symbol, date, data):
         try:
             financial_data = FinancialData()
             financial_data.symbol = symbol
